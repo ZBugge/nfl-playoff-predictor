@@ -69,7 +69,11 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/season', seasonRoutes);
 
-// Serve static frontend files in production BEFORE API routes
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Serve static frontend files in production (AFTER API routes, BEFORE catch-all)
 if (process.env.NODE_ENV === 'production') {
   const clientPath = path.join(__dirname, '../../client/dist');
 
@@ -77,7 +81,6 @@ if (process.env.NODE_ENV === 'production') {
   console.log('Production mode - serving static files');
   console.log('__dirname:', __dirname);
   console.log('clientPath:', clientPath);
-  console.log('Checking if clientPath exists...');
 
   // Check if path exists
   try {
@@ -86,6 +89,12 @@ if (process.env.NODE_ENV === 'production') {
     if (exists) {
       const files = fs.readdirSync(clientPath);
       console.log('Files in client/dist:', files);
+      // Check assets folder
+      const assetsPath = path.join(clientPath, 'assets');
+      if (fs.existsSync(assetsPath)) {
+        const assetFiles = fs.readdirSync(assetsPath);
+        console.log('Files in client/dist/assets:', assetFiles);
+      }
     } else {
       console.log('WARNING: client/dist directory does not exist!');
     }
@@ -94,25 +103,13 @@ if (process.env.NODE_ENV === 'production') {
   }
   console.log('===========================================');
 
-  // Serve static assets
-  app.use(express.static(clientPath, {
-    setHeaders: (_res, filePath) => {
-      console.log('Serving static file:', filePath);
-    }
-  }));
-}
+  // Serve static assets with fallthrough disabled
+  app.use(express.static(clientPath));
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// SPA fallback - serve index.html for any non-API route (MUST be last!)
-if (process.env.NODE_ENV === 'production') {
-  const clientPath = path.join(__dirname, '../../client/dist');
+  // SPA fallback - serve index.html for any non-API route (MUST be last!)
   app.get('*', (req, res) => {
     console.log('SPA fallback for:', req.url);
     const indexPath = path.join(clientPath, 'index.html');
-    console.log('Sending file:', indexPath);
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error sending index.html:', err);

@@ -16,6 +16,7 @@ cd client
 echo "Client directory contents: $(ls -la)"
 npm run build
 echo "Client dist contents: $(ls -la dist/ || echo 'dist not found')"
+echo "Client dist/assets contents: $(ls -la dist/assets/ || echo 'assets not found')"
 cd ..
 
 echo ""

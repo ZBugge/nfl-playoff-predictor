@@ -4,6 +4,7 @@ import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { initializeDatabase } from './db/schema.js';
 import authRoutes from './routes/auth.js';
 import lobbyRoutes from './routes/lobby.js';
@@ -75,6 +76,27 @@ app.get('/api/health', (req, res) => {
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
   const clientPath = path.join(__dirname, '../../client/dist');
+
+  console.log('===========================================');
+  console.log('Production mode - serving static files');
+  console.log('__dirname:', __dirname);
+  console.log('clientPath:', clientPath);
+  console.log('Checking if clientPath exists...');
+
+  // Check if path exists
+  try {
+    const exists = fs.existsSync(clientPath);
+    console.log('clientPath exists:', exists);
+    if (exists) {
+      const files = fs.readdirSync(clientPath);
+      console.log('Files in client/dist:', files);
+    } else {
+      console.log('WARNING: client/dist directory does not exist!');
+    }
+  } catch (err) {
+    console.error('Error checking clientPath:', err);
+  }
+  console.log('===========================================');
 
   // Serve static assets
   app.use(express.static(clientPath));

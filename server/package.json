@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest"
+    "test": "vitest",
+    "clear-db": "node clear-db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -69,11 +69,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/season', seasonRoutes);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// Serve static frontend files in production
+// Serve static frontend files in production BEFORE API routes
 if (process.env.NODE_ENV === 'production') {
   const clientPath = path.join(__dirname, '../../client/dist');
 
@@ -99,11 +95,30 @@ if (process.env.NODE_ENV === 'production') {
   console.log('===========================================');
 
   // Serve static assets
-  app.use(express.static(clientPath));
+  app.use(express.static(clientPath, {
+    setHeaders: (_res, filePath) => {
+      console.log('Serving static file:', filePath);
+    }
+  }));
+}
 
-  // SPA fallback - serve index.html for any non-API route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// SPA fallback - serve index.html for any non-API route (MUST be last!)
+if (process.env.NODE_ENV === 'production') {
+  const clientPath = path.join(__dirname, '../../client/dist');
   app.get('*', (req, res) => {
-    res.sendFile(path.join(clientPath, 'index.html'));
+    console.log('SPA fallback for:', req.url);
+    const indexPath = path.join(clientPath, 'index.html');
+    console.log('Sending file:', indexPath);
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error sending index.html:', err);
+        res.status(500).send('Error loading page');
+      }
+    });
   });
 }
 

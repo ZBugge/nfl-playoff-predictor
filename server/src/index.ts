@@ -4,7 +4,6 @@ import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 import { initializeDatabase } from './db/schema.js';
 import authRoutes from './routes/auth.js';
 import lobbyRoutes from './routes/lobby.js';
@@ -27,6 +26,13 @@ if (process.env.NODE_ENV === 'production' && SESSION_SECRET.includes('change-in-
 }
 
 initializeDatabase();
+
+// Serve static files FIRST (before CORS) in production
+if (process.env.NODE_ENV === 'production') {
+  const clientPath = path.join(__dirname, '../../client/dist');
+  console.log('Setting up static file serving from:', clientPath);
+  app.use(express.static(clientPath));
+}
 
 // Environment-aware CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'production'
@@ -73,49 +79,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Serve static frontend files in production (AFTER API routes, BEFORE catch-all)
+// SPA fallback - serve index.html for any non-API route (MUST be last!)
 if (process.env.NODE_ENV === 'production') {
   const clientPath = path.join(__dirname, '../../client/dist');
-
-  console.log('===========================================');
-  console.log('Production mode - serving static files');
-  console.log('__dirname:', __dirname);
-  console.log('clientPath:', clientPath);
-
-  // Check if path exists
-  try {
-    const exists = fs.existsSync(clientPath);
-    console.log('clientPath exists:', exists);
-    if (exists) {
-      const files = fs.readdirSync(clientPath);
-      console.log('Files in client/dist:', files);
-      // Check assets folder
-      const assetsPath = path.join(clientPath, 'assets');
-      if (fs.existsSync(assetsPath)) {
-        const assetFiles = fs.readdirSync(assetsPath);
-        console.log('Files in client/dist/assets:', assetFiles);
-      }
-    } else {
-      console.log('WARNING: client/dist directory does not exist!');
-    }
-  } catch (err) {
-    console.error('Error checking clientPath:', err);
-  }
-  console.log('===========================================');
-
-  // Serve static assets with fallthrough disabled
-  app.use(express.static(clientPath));
-
-  // SPA fallback - serve index.html for any non-API route (MUST be last!)
-  app.get('*', (req, res) => {
-    console.log('SPA fallback for:', req.url);
+  app.get('*', (_req, res) => {
     const indexPath = path.join(clientPath, 'index.html');
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error('Error sending index.html:', err);
-        res.status(500).send('Error loading page');
-      }
-    });
+    res.sendFile(indexPath);
   });
 }
 

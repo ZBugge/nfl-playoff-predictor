@@ -44,9 +44,12 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) return callback(null, true);
 
+    console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigins);
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error('CORS rejected origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },

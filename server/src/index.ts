@@ -34,27 +34,21 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(clientPath));
 }
 
-// Environment-aware CORS configuration
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || 'https://your-app.railway.app']
-  : ['http://localhost:5173', 'http://localhost:5174'];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
-    if (!origin) return callback(null, true);
-
-    console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigins);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error('CORS rejected origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
+// Environment-aware CORS configuration (only needed for development when frontend is on different port)
+if (process.env.NODE_ENV !== 'production') {
+  const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  }));
+}
 
 app.use(express.json());
 
@@ -66,6 +60,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })

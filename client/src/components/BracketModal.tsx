@@ -73,7 +73,19 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
   const renderGameCard = (game: BracketGame, compact: boolean = false) => {
     const style = getPickStyle(game)
     const icon = getPickIcon(game)
-    const prediction = game.prediction?.predictedWinner || 'No pick'
+    const predictionWinner = game.prediction?.predictedWinner || 'No pick'
+
+    // Determine teams to display - use prediction data if actual teams are TBD
+    let teamsDisplay: string
+    if (game.teamHome && game.teamAway && game.teamHome !== 'TBD' && game.teamAway !== 'TBD') {
+      teamsDisplay = `${game.teamHome} vs ${game.teamAway}`
+    } else if (game.prediction) {
+      const team1 = game.prediction.predictedWinner
+      const team2 = game.prediction.predictedOpponent || 'TBD'
+      teamsDisplay = `${team1} vs ${team2}`
+    } else {
+      teamsDisplay = 'TBD vs TBD'
+    }
 
     return (
       <div
@@ -88,10 +100,10 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
         }}
       >
         <div style={{ fontSize: compact ? '0.6875rem' : '0.75rem', color: '#718096', marginBottom: '0.25rem' }}>
-          {game.teamHome} vs {game.teamAway}
+          {teamsDisplay}
         </div>
         <div style={{ fontWeight: 600, fontSize: compact ? '0.8125rem' : '0.875rem' }}>
-          {prediction}{icon}
+          {predictionWinner}{icon}
         </div>
         {game.completed && game.winner ? (
           <div style={{ fontSize: compact ? '0.625rem' : '0.6875rem', color: '#718096', marginTop: '0.25rem' }}>

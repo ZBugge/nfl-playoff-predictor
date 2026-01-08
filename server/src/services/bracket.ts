@@ -58,6 +58,20 @@ export async function getParticipantBracket(
     predictionMap.set(pred.game_id, pred);
   }
 
+  // Build set of eliminated teams (losers of completed games)
+  const eliminatedTeams = new Set<string>();
+  for (const game of games) {
+    if (game.completed && game.winner) {
+      // The loser is the team that isn't the winner
+      if (game.team_home && game.team_home !== game.winner) {
+        eliminatedTeams.add(game.team_home);
+      }
+      if (game.team_away && game.team_away !== game.winner) {
+        eliminatedTeams.add(game.team_away);
+      }
+    }
+  }
+
   // Calculate stats and build bracket games
   let simpleScore = 0;
   let weightedScore = 0;
@@ -72,11 +86,17 @@ export async function getParticipantBracket(
       totalPicks++;
 
       if (game.completed && game.winner) {
+        // Game is completed - check if prediction was correct
         isCorrect = game.winner === prediction.predicted_winner;
         if (isCorrect) {
           correctPicks++;
           simpleScore += 1;
           weightedScore += WEIGHTED_POINTS[game.round] || 0;
+        }
+      } else {
+        // Game not completed - check if predicted winner is already eliminated
+        if (eliminatedTeams.has(prediction.predicted_winner)) {
+          isCorrect = false; // Predicted winner can't win anymore
         }
       }
     }

@@ -59,6 +59,19 @@ stmt.free();
 // Must call saveDb() after mutations
 ```
 
+**CRITICAL: SQLite Boolean Gotcha**
+SQLite stores booleans as integers (0/1). In React, this causes a rendering bug:
+```tsx
+// BAD - renders "0" when completed is 0
+{game.completed && <Component />}
+
+// GOOD - renders nothing when completed is 0
+{game.completed ? <Component /> : null}
+{Boolean(game.completed) && <Component />}
+{!!game.completed && <Component />}
+```
+Always use ternary operators or explicit boolean conversion when rendering conditionally based on SQLite boolean fields (`completed`, `is_actual_matchup`, `is_super_admin`, etc.).
+
 ### Authentication
 Session-based with `express-session`. Middleware in `server/src/middleware/auth.ts` checks `req.session.adminId`. Credentials require `credentials: 'include'` on frontend fetch calls.
 
@@ -73,6 +86,9 @@ See `RE-SEEDING-IMPLEMENTATION.md` for full details.
 ### Environment
 - **Development**: CORS enabled, API proxy at `/api` → `localhost:3001`
 - **Production**: Same-origin (CORS disabled), secure cookies, `NODE_ENV=production`, `SESSION_SECRET` required
+
+### Git Workflow
+**Do NOT push to remote until the user has verified the feature works locally.** Commit changes locally, then wait for human confirmation before running `git push`.
 
 ### Deployment Notes
 See `DEPLOYMENT-LESSONS-LEARNED.md` for Railway deployment details. Critical: Express static file middleware must come BEFORE CORS middleware.

@@ -176,6 +176,20 @@ function Leaderboard() {
             </div>
           )}
 
+          {lobby?.scoring_type === 'both' && (
+            <div style={{
+              backgroundColor: '#f7fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '0.375rem',
+              padding: '0.75rem 1rem',
+              marginBottom: '1rem',
+              color: '#4a5568',
+              fontSize: '0.875rem'
+            }}>
+              When simple scores are tied, weighted score determines the ranking.
+            </div>
+          )}
+
           {leaderboard.length === 0 ? (
             <p className="leaderboard-empty">
               No participants yet. Be the first to join!

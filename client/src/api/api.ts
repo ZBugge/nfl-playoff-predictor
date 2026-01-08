@@ -23,6 +23,7 @@ interface Lobby {
   scoring_type: 'simple' | 'weighted' | 'bracket' | 'both';
   status: 'open' | 'in_progress' | 'completed';
   created_at: string;
+  participant_count?: number;
 }
 
 interface Game {

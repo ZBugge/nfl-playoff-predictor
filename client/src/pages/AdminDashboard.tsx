@@ -145,12 +145,15 @@ function AdminDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                   <div>
                     <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>{lobby.name}</h3>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span className={`badge badge-${lobby.status === 'open' ? 'info' : lobby.status === 'in_progress' ? 'warning' : 'success'}`}>
                         {lobby.status.replace('_', ' ').toUpperCase()}
                       </span>
                       <span className="badge badge-info">
                         {lobby.scoring_type === 'both' ? 'Both Scoring Types' : lobby.scoring_type.toUpperCase()}
+                      </span>
+                      <span className="badge" style={{ backgroundColor: '#805ad5', color: 'white' }}>
+                        {lobby.participant_count ?? 0} {lobby.participant_count === 1 ? 'participant' : 'participants'}
                       </span>
                     </div>
                   </div>

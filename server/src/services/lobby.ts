@@ -17,8 +17,20 @@ export async function getLobbyById(id: string): Promise<Lobby | undefined> {
   return results[0];
 }
 
-export async function getLobbiesByAdmin(adminId: number): Promise<Lobby[]> {
-  return runQuery<Lobby>('SELECT * FROM lobbies WHERE admin_id = ? ORDER BY created_at DESC', [adminId]);
+export interface LobbyWithCount extends Lobby {
+  participant_count: number;
+}
+
+export async function getLobbiesByAdmin(adminId: number): Promise<LobbyWithCount[]> {
+  return runQuery<LobbyWithCount>(
+    `SELECT l.*, COUNT(p.id) as participant_count
+     FROM lobbies l
+     LEFT JOIN participants p ON l.id = p.lobby_id
+     WHERE l.admin_id = ?
+     GROUP BY l.id
+     ORDER BY l.created_at DESC`,
+    [adminId]
+  );
 }
 
 export async function addParticipant(lobbyId: string, name: string): Promise<Participant> {

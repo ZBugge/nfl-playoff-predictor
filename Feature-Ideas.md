@@ -1,4 +1,3 @@
-- View Leaderboard button on the My Lobbies page should open in a new tab
 - The My Lobbies page should display how many participants are in each lobby
 - As a super admin i want to have a dashboard where i can see how many admin accounts have been made/ how many lobbies have been created/ how many users have made predictions etc
 - I want to figure out a way to nicely display each user's picks when looking at the lobby. Like clicking their name will then pop up what their bracket looks like

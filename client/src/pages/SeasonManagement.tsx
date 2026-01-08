@@ -22,6 +22,13 @@ function SeasonManagement() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [showSeedingForm, setShowSeedingForm] = useState(true)
 
+  // Team editing state
+  const [teams, setTeams] = useState<string[]>([])
+  const [editingTeam, setEditingTeam] = useState<string | null>(null)
+  const [newTeamName, setNewTeamName] = useState('')
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [showTeamEditor, setShowTeamEditor] = useState(false)
+
   const homeTeamInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -65,6 +72,42 @@ function SeasonManagement() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTeams = async () => {
+    try {
+      const teamsData = await api.season.getTeams(Number(seasonId!))
+      setTeams(teamsData)
+    } catch (err: any) {
+      console.error('Failed to load teams:', err)
+    }
+  }
+
+  const handleRenameTeam = async (oldName: string) => {
+    if (!newTeamName.trim()) {
+      alert('Please enter a new team name')
+      return
+    }
+
+    if (newTeamName === oldName) {
+      setEditingTeam(null)
+      setNewTeamName('')
+      return
+    }
+
+    setIsRenaming(true)
+    try {
+      const result = await api.season.renameTeam(Number(seasonId!), oldName, newTeamName)
+      alert(`Team renamed! Updated ${result.gamesUpdated} games, ${result.seedsUpdated} seeds, ${result.predictionsUpdated} predictions.`)
+      setEditingTeam(null)
+      setNewTeamName('')
+      await loadData()
+      await loadTeams()
+    } catch (err: any) {
+      alert('Failed to rename team: ' + err.message)
+    } finally {
+      setIsRenaming(false)
     }
   }
 
@@ -243,12 +286,104 @@ function SeasonManagement() {
           Season ID: {seasonId} | Year: {season?.year} | Status: {season?.status}
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
           <button onClick={handleUpdateScores} className="btn btn-primary" disabled={updating}>
             {updating ? 'Updating...' : 'Update Scores from ESPN'}
           </button>
+          <button
+            onClick={() => {
+              setShowTeamEditor(!showTeamEditor)
+              if (!showTeamEditor) loadTeams()
+            }}
+            className="btn btn-secondary"
+          >
+            {showTeamEditor ? 'Hide Team Editor' : 'Edit Team Names'}
+          </button>
         </div>
       </div>
+
+      {showTeamEditor && (
+        <div className="card">
+          <h3>Edit Team Names</h3>
+          <p style={{ color: '#718096', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            Fix typos in team names. Changes will update all games, seeds, and predictions for this season.
+          </p>
+
+          {teams.length === 0 ? (
+            <p style={{ color: '#a0aec0', fontStyle: 'italic' }}>No teams found. Add games or seeds first.</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
+              {teams.map(team => (
+                <div
+                  key={team}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: '#f7fafc',
+                    borderRadius: '0.375rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  {editingTeam === team ? (
+                    <>
+                      <input
+                        type="text"
+                        className="input"
+                        value={newTeamName}
+                        onChange={e => setNewTeamName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleRenameTeam(team)
+                          if (e.key === 'Escape') {
+                            setEditingTeam(null)
+                            setNewTeamName('')
+                          }
+                        }}
+                        autoFocus
+                        style={{ flex: 1, padding: '0.375rem 0.5rem', fontSize: '0.875rem' }}
+                        disabled={isRenaming}
+                      />
+                      <button
+                        onClick={() => handleRenameTeam(team)}
+                        className="btn btn-primary"
+                        style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                        disabled={isRenaming}
+                      >
+                        {isRenaming ? '...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingTeam(null)
+                          setNewTeamName('')
+                        }}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                        disabled={isRenaming}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, fontWeight: 500 }}>{team}</span>
+                      <button
+                        onClick={() => {
+                          setEditingTeam(team)
+                          setNewTeamName(team)
+                        }}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                      >
+                        Edit
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showSeedingForm && (
         <div className="card">

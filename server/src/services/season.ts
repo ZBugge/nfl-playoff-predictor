@@ -406,3 +406,125 @@ async function updateSuperBowlGame(
     );
   }
 }
+
+/**
+ * Rename a team across all tables in a season (fixes typos)
+ * Updates: games (team_home, team_away, winner), playoff_seeds, predictions
+ */
+export async function renameTeamInSeason(
+  seasonId: number,
+  oldName: string,
+  newName: string
+): Promise<{ gamesUpdated: number; seedsUpdated: number; predictionsUpdated: number }> {
+  let gamesUpdated = 0;
+  let seedsUpdated = 0;
+  let predictionsUpdated = 0;
+
+  // Update games table - team_home
+  const homeResult = await runQuery<{ changes: number }>(
+    `UPDATE games SET team_home = ? WHERE season_id = ? AND team_home = ?`,
+    [newName, seasonId, oldName]
+  );
+
+  // Update games table - team_away
+  await runExec(
+    `UPDATE games SET team_away = ? WHERE season_id = ? AND team_away = ?`,
+    [newName, seasonId, oldName]
+  );
+
+  // Update games table - winner
+  await runExec(
+    `UPDATE games SET winner = ? WHERE season_id = ? AND winner = ?`,
+    [newName, seasonId, oldName]
+  );
+
+  // Count games updated
+  const gamesWithTeam = await runQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM games WHERE season_id = ? AND (team_home = ? OR team_away = ? OR winner = ?)`,
+    [seasonId, newName, newName, newName]
+  );
+  gamesUpdated = gamesWithTeam[0]?.count || 0;
+
+  // Update playoff_seeds table
+  await runExec(
+    `UPDATE playoff_seeds SET team_abbr = ? WHERE season_id = ? AND team_abbr = ?`,
+    [newName, seasonId, oldName]
+  );
+
+  const seedsWithTeam = await runQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM playoff_seeds WHERE season_id = ? AND team_abbr = ?`,
+    [seasonId, newName]
+  );
+  seedsUpdated = seedsWithTeam[0]?.count || 0;
+
+  // Update predictions table - need to join through participants and lobbies
+  // Get all lobby IDs for this season
+  const lobbies = await runQuery<{ id: string }>(
+    `SELECT id FROM lobbies WHERE season_id = ?`,
+    [seasonId]
+  );
+
+  for (const lobby of lobbies) {
+    // Get participant IDs for this lobby
+    const participants = await runQuery<{ id: number }>(
+      `SELECT id FROM participants WHERE lobby_id = ?`,
+      [lobby.id]
+    );
+
+    for (const participant of participants) {
+      // Update predicted_winner
+      await runExec(
+        `UPDATE predictions SET predicted_winner = ? WHERE participant_id = ? AND predicted_winner = ?`,
+        [newName, participant.id, oldName]
+      );
+
+      // Update predicted_opponent
+      await runExec(
+        `UPDATE predictions SET predicted_opponent = ? WHERE participant_id = ? AND predicted_opponent = ?`,
+        [newName, participant.id, oldName]
+      );
+    }
+  }
+
+  // Count predictions updated
+  const predictionsCount = await runQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM predictions p
+     JOIN participants pa ON p.participant_id = pa.id
+     JOIN lobbies l ON pa.lobby_id = l.id
+     WHERE l.season_id = ? AND (p.predicted_winner = ? OR p.predicted_opponent = ?)`,
+    [seasonId, newName, newName]
+  );
+  predictionsUpdated = predictionsCount[0]?.count || 0;
+
+  return { gamesUpdated, seedsUpdated, predictionsUpdated };
+}
+
+/**
+ * Get all unique team names in a season
+ */
+export async function getTeamsInSeason(seasonId: number): Promise<string[]> {
+  const teams = new Set<string>();
+
+  // Get teams from games
+  const games = await runQuery<{ team_home: string; team_away: string }>(
+    `SELECT DISTINCT team_home, team_away FROM games WHERE season_id = ? AND team_home != 'TBD'`,
+    [seasonId]
+  );
+
+  for (const game of games) {
+    if (game.team_home && game.team_home !== 'TBD') teams.add(game.team_home);
+    if (game.team_away && game.team_away !== 'TBD') teams.add(game.team_away);
+  }
+
+  // Get teams from playoff_seeds
+  const seeds = await runQuery<{ team_abbr: string }>(
+    `SELECT DISTINCT team_abbr FROM playoff_seeds WHERE season_id = ?`,
+    [seasonId]
+  );
+
+  for (const seed of seeds) {
+    if (seed.team_abbr) teams.add(seed.team_abbr);
+  }
+
+  return Array.from(teams).sort();
+}

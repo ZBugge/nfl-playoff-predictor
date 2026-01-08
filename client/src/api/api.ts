@@ -296,6 +296,28 @@ export const api = {
       }
       return res.json();
     },
+
+    getTeams: async (seasonId: number): Promise<string[]> => {
+      const res = await fetch(`${API_URL}/season/${seasonId}/teams`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to get teams');
+      return res.json();
+    },
+
+    renameTeam: async (seasonId: number, oldName: string, newName: string): Promise<{ success: boolean; gamesUpdated: number; seedsUpdated: number; predictionsUpdated: number }> => {
+      const res = await fetch(`${API_URL}/season/${seasonId}/team/rename`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ oldName, newName }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to rename team');
+      }
+      return res.json();
+    },
   },
 
   participant: {

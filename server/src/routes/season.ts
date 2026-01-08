@@ -16,6 +16,8 @@ import {
   setPlayoffSeed,
   getPlayoffSeeds,
   generatePlayoffGamesFromSeeds,
+  renameTeamInSeason,
+  getTeamsInSeason,
 } from '../services/season.js';
 import { canCreateActiveSeason, getSystemConfig, updateSystemConfig, getUsageStats, HARD_CAPS } from '../services/limits.js';
 
@@ -292,6 +294,38 @@ router.post('/:seasonId/seeds', requireAuth, requireSuperAdmin, async (req, res)
   } catch (error: any) {
     console.error('Set playoff seeds error:', error);
     res.status(500).json({ error: error.message || 'Failed to set playoff seeds' });
+  }
+});
+
+// Get all teams in a season (super admin only)
+router.get('/:seasonId/teams', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const teams = await getTeamsInSeason(Number(req.params.seasonId));
+    res.json(teams);
+  } catch (error) {
+    console.error('Get teams error:', error);
+    res.status(500).json({ error: 'Failed to get teams' });
+  }
+});
+
+// Rename a team in a season (super admin only)
+router.patch('/:seasonId/team/rename', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { oldName, newName } = req.body;
+
+    if (!oldName || !newName) {
+      return res.status(400).json({ error: 'oldName and newName are required' });
+    }
+
+    if (oldName === newName) {
+      return res.status(400).json({ error: 'New name must be different from old name' });
+    }
+
+    const result = await renameTeamInSeason(Number(req.params.seasonId), oldName, newName);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Rename team error:', error);
+    res.status(500).json({ error: 'Failed to rename team' });
   }
 });
 

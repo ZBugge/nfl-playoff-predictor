@@ -430,7 +430,7 @@ function SeasonManagement() {
                       </span>
                     </div>
 
-                    {game.completed && (
+                    {!!game.completed && (
                       <div style={{ marginTop: '0.5rem' }}>
                         <span className="badge badge-success">Winner: {game.winner}</span>
                       </div>

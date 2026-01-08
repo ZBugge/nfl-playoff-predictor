@@ -173,6 +173,8 @@ function AdminDashboard() {
                   </button>
                   <Link
                     to={`/leaderboard/${lobby.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="btn btn-primary"
                     style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', textDecoration: 'none' }}
                   >

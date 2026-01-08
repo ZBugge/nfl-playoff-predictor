@@ -132,9 +132,9 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           ...style,
           border: '2px solid',
           borderRadius: '6px',
-          padding: compact ? '0.5rem' : '0.75rem',
+          padding: compact ? '0.5rem' : '0.5rem 0.75rem',
           marginBottom: '0.5rem',
-          minWidth: compact ? '100px' : '140px',
+          minWidth: compact ? '90px' : '115px',
         }}
       >
         <div style={{ fontSize: compact ? '0.6875rem' : '0.75rem', color: '#718096', marginBottom: '0.25rem' }}>
@@ -241,10 +241,10 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
         {/* Bracket Content - Desktop */}
         <div className="bracket-desktop" style={bracketDesktopStyle}>
           {/* AFC Side */}
-          <div style={{ flex: 1 }}>
-            <h3 style={{ textAlign: 'center', color: '#667eea', marginBottom: '1rem', fontSize: '1.125rem' }}>AFC</h3>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ textAlign: 'center', color: '#667eea', marginBottom: '0.75rem', fontSize: '1rem' }}>AFC</h3>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
               {/* Wild Card */}
               <div>
                 {renderRoundLabel('Wild Card')}
@@ -266,16 +266,16 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           </div>
 
           {/* Super Bowl Center */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 0.5rem' }}>
             {renderRoundLabel('Super Bowl')}
             {superBowl && renderGameCard(superBowl, bracketData.games)}
           </div>
 
           {/* NFC Side */}
-          <div style={{ flex: 1 }}>
-            <h3 style={{ textAlign: 'center', color: '#e53e3e', marginBottom: '1rem', fontSize: '1.125rem' }}>NFC</h3>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ textAlign: 'center', color: '#e53e3e', marginBottom: '0.75rem', fontSize: '1rem' }}>NFC</h3>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexDirection: 'row-reverse' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexDirection: 'row-reverse' }}>
               {/* Wild Card */}
               <div>
                 {renderRoundLabel('Wild Card')}
@@ -365,9 +365,10 @@ const modalStyle: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
   width: '100%',
-  maxWidth: '1100px',
+  maxWidth: '1000px',
   maxHeight: '90vh',
   overflowY: 'auto',
+  overflowX: 'hidden',
   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 }
 
@@ -412,8 +413,9 @@ const legendStyle: React.CSSProperties = {
 
 const bracketDesktopStyle: React.CSSProperties = {
   display: 'flex',
-  padding: '1.5rem',
-  gap: '0.5rem',
+  padding: '1rem',
+  gap: '0.25rem',
+  justifyContent: 'center',
 }
 
 const bracketMobileStyle: React.CSSProperties = {

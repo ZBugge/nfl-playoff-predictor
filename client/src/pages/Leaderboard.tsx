@@ -13,6 +13,7 @@ function Leaderboard() {
   const [admin, setAdmin] = useState<Admin | null>(null)
   const [selectedParticipants, setSelectedParticipants] = useState<Set<number>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -82,6 +83,13 @@ function Leaderboard() {
     }
   }
 
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/join/${lobbyId}`
+    navigator.clipboard.writeText(link)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   const isLobbyOwner = admin && lobby && admin.id === lobby.admin_id
 
   if (loading) {
@@ -113,6 +121,19 @@ function Leaderboard() {
     <div className="container">
       <div className="leaderboard-container">
         <h1>{lobby?.name}</h1>
+
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <button
+            onClick={copyInviteLink}
+            className="btn btn-secondary"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+          >
+            {copied ? 'Link Copied!' : 'Share Invite Link'}
+          </button>
+          <p style={{ color: '#a0aec0', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+            Invite friends to make their predictions
+          </p>
+        </div>
 
         <div className="card">
           <div className="leaderboard-header">

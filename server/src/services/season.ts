@@ -91,6 +91,22 @@ export async function deleteAllGamesForSeason(seasonId: number): Promise<void> {
   await runExec('DELETE FROM games WHERE season_id = ?', [seasonId]);
 }
 
+export async function resetAllWinnersForSeason(seasonId: number): Promise<number> {
+  // Reset all games to have no winner and not completed
+  await runExec(
+    'UPDATE games SET winner = NULL, completed = 0 WHERE season_id = ?',
+    [seasonId]
+  );
+
+  // Get count of games reset
+  const result = await runQuery<{ count: number }>(
+    'SELECT COUNT(*) as count FROM games WHERE season_id = ?',
+    [seasonId]
+  );
+
+  return result[0]?.count || 0;
+}
+
 // Playoff seeding functions
 export async function setPlayoffSeed(
   seasonId: number,

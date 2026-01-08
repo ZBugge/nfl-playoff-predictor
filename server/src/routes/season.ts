@@ -18,6 +18,7 @@ import {
   generatePlayoffGamesFromSeeds,
   renameTeamInSeason,
   getTeamsInSeason,
+  resetAllWinnersForSeason,
 } from '../services/season.js';
 import { canCreateActiveSeason, getSystemConfig, updateSystemConfig, getUsageStats, HARD_CAPS } from '../services/limits.js';
 
@@ -326,6 +327,17 @@ router.patch('/:seasonId/team/rename', requireAuth, requireSuperAdmin, async (re
   } catch (error) {
     console.error('Rename team error:', error);
     res.status(500).json({ error: 'Failed to rename team' });
+  }
+});
+
+// Reset all winners for a season (super admin only)
+router.post('/:seasonId/games/reset-winners', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const gamesReset = await resetAllWinnersForSeason(Number(req.params.seasonId));
+    res.json({ success: true, gamesReset });
+  } catch (error) {
+    console.error('Reset winners error:', error);
+    res.status(500).json({ error: 'Failed to reset winners' });
   }
 });
 

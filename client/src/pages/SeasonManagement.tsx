@@ -16,6 +16,7 @@ function SeasonManagement() {
 
   const [selectedGames, setSelectedGames] = useState<Set<number>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isResettingWinners, setIsResettingWinners] = useState(false)
 
   const [afcSeeds, setAfcSeeds] = useState<Record<number, string>>({})
   const [nfcSeeds, setNfcSeeds] = useState<Record<number, string>>({})
@@ -220,6 +221,34 @@ function SeasonManagement() {
       alert('Failed to reset games: ' + err.message)
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleResetWinners = async () => {
+    if (games.length === 0) {
+      alert('No games to reset')
+      return
+    }
+
+    const gamesWithWinners = games.filter(g => g.winner)
+    if (gamesWithWinners.length === 0) {
+      alert('No games have winners set')
+      return
+    }
+
+    if (!confirm(`Are you sure you want to reset winners for all ${gamesWithWinners.length} game(s) with winners? The games will remain but all winner selections will be cleared.`)) {
+      return
+    }
+
+    setIsResettingWinners(true)
+    try {
+      const result = await api.season.resetWinners(Number(seasonId!))
+      alert(`Successfully reset winners for ${result.gamesReset} game(s)`)
+      await loadData()
+    } catch (err: any) {
+      alert('Failed to reset winners: ' + err.message)
+    } finally {
+      setIsResettingWinners(false)
     }
   }
 
@@ -521,8 +550,16 @@ function SeasonManagement() {
                   </button>
                 )}
                 <button
+                  onClick={handleResetWinners}
+                  disabled={isResettingWinners || isDeleting}
+                  className="btn"
+                  style={{ padding: '0.5rem 1rem', backgroundColor: '#ed8936', color: 'white' }}
+                >
+                  {isResettingWinners ? 'Resetting...' : 'Reset Winners'}
+                </button>
+                <button
                   onClick={handleResetGames}
-                  disabled={isDeleting}
+                  disabled={isDeleting || isResettingWinners}
                   className="btn btn-danger"
                   style={{ padding: '0.5rem 1rem' }}
                 >

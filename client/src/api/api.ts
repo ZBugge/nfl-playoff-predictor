@@ -318,6 +318,18 @@ export const api = {
       }
       return res.json();
     },
+
+    resetWinners: async (seasonId: number): Promise<{ success: boolean; gamesReset: number }> => {
+      const res = await fetch(`${API_URL}/season/${seasonId}/games/reset-winners`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to reset winners');
+      }
+      return res.json();
+    },
   },
 
   participant: {

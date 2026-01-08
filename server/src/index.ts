@@ -27,6 +27,11 @@ if (process.env.NODE_ENV === 'production' && SESSION_SECRET.includes('change-in-
 
 initializeDatabase();
 
+// Trust proxy in production (Railway uses a reverse proxy)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Serve static files FIRST (before CORS) in production
 if (process.env.NODE_ENV === 'production') {
   const clientPath = path.join(__dirname, '../../client/dist');

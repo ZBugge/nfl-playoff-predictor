@@ -313,6 +313,62 @@ If you later decide to serve frontend from a CDN or different domain, you'll nee
 
 ---
 
+### Issue 6: Secure Cookies Not Being Set Behind Reverse Proxy (Railway)
+**Symptoms:**
+- Login/register POST request returns 200 OK
+- Immediately get 401 Unauthorized on `/api/auth/me`
+- Session cookie is NOT being set in the browser (check Application → Cookies)
+- Everything works in development but fails in production
+
+**Root Cause:**
+Railway (and most cloud platforms) run your app behind a **reverse proxy/load balancer**. When you have `secure: true` on session cookies (required for HTTPS), Express needs to know it's behind a proxy to properly handle the connection.
+
+Without `trust proxy`, Express sees the connection from Railway's proxy as HTTP (not HTTPS), so it refuses to set the `secure: true` cookie.
+
+**Diagnosis:**
+```bash
+# In browser DevTools Network tab:
+# 1. POST /api/auth/login → 200 OK (login succeeds)
+# 2. GET /api/auth/me → 401 Unauthorized (session not found)
+
+# Check Application → Cookies → Your domain
+# If NO session cookie exists after login, this is the issue
+```
+
+**Solution:**
+```typescript
+// ✅ CORRECT - Trust proxy in production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);  // Trust first proxy (Railway's load balancer)
+}
+
+// Session middleware (AFTER trust proxy)
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',  // Now works correctly!
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  },
+}));
+```
+
+**Key Insight:**
+- `trust proxy` tells Express to trust the `X-Forwarded-Proto` header from Railway
+- This lets Express know the original request was HTTPS (even though proxy→app is HTTP)
+- Without this, `secure: true` cookies will never be set in production
+- The value `1` means "trust first proxy" - use this for Railway, Heroku, Render, etc.
+
+**Warning:**
+- Never set `trust proxy` to `true` (trusts all proxies) in production - security risk
+- Use `1` to trust only the first proxy (your hosting platform)
+- If behind multiple proxies, adjust the number accordingly
+
+---
+
 ## Railway CLI Setup
 
 ### Installation
@@ -367,7 +423,8 @@ Run `railway logs` in a separate terminal while developing to see deployment log
 
 ### Code Verification
 - [ ] Static files served BEFORE CORS
-- [ ] CORS allows production URL
+- [ ] CORS allows production URL (or disabled for same-origin)
+- [ ] `trust proxy` enabled in production (for Railway/Heroku/etc.)
 - [ ] Session secret validation in production
 - [ ] SPA fallback route is LAST
 - [ ] TypeScript excludes test files
@@ -477,6 +534,7 @@ curl https://your-app.railway.app/api/health
 4. **Implicit middleware order** - Led to hours of debugging
 5. **CORS enabled in production for same-origin** - Broke session cookies and caused 401 errors
 6. **Wrong sameSite cookie setting** - Using 'none' when 'lax' is correct for same-origin
+7. **Missing `trust proxy`** - Secure cookies won't be set behind Railway's reverse proxy
 
 ### Time Savers for Next Time
 1. Set up middleware order correctly from the start
@@ -485,7 +543,8 @@ curl https://your-app.railway.app/api/health
 4. Install Railway CLI before starting
 5. **Understand same-origin vs cross-origin** - Don't enable CORS in production if frontend/backend on same domain
 6. **Start with correct session cookie config** - Use `sameSite: 'lax'` for same-origin, `secure: true` for HTTPS
-7. Reference this document! 🎯
+7. **Always add `trust proxy` for cloud deployments** - Required for secure cookies behind reverse proxies
+8. Reference this document! 🎯
 
 ---
 
@@ -507,6 +566,10 @@ curl https://your-app.railway.app/api/health
   - Issue: 401 Unauthorized errors on `/api/auth/me` after login/registration
   - Root cause: CORS enabled in production for same-origin setup
   - Solution: Disabled CORS in production (only needed for dev), set `sameSite: 'lax'`
+- **v1.2** (2026-01-07): Fixed secure cookies behind Railway's reverse proxy
+  - Issue: Login succeeds (200 OK) but session cookie not being set, causing 401 on `/api/auth/me`
+  - Root cause: Missing `trust proxy` setting - Express didn't know it was behind a proxy
+  - Solution: Added `app.set('trust proxy', 1)` in production
 
 ---
 

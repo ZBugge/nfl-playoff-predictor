@@ -73,7 +73,7 @@ function AdminDashboard() {
         <div className="nav">
           <h1 style={{ fontSize: '1.75rem', margin: 0 }}>NFL Playoff Predictor</h1>
           <div className="nav-links">
-            <span style={{ color: 'white' }}>Welcome, {admin?.username} {admin?.is_super_admin && '(Super Admin)'}</span>
+            <span style={{ color: 'white' }}>Welcome, {admin?.username} {!!admin?.is_super_admin && '(Super Admin)'}</span>
             <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
               Logout
             </button>
@@ -81,7 +81,7 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {admin?.is_super_admin && (
+      {!!admin?.is_super_admin && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0 }}>Seasons</h2>

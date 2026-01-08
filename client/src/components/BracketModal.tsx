@@ -93,11 +93,11 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
         <div style={{ fontWeight: 600, fontSize: compact ? '0.8125rem' : '0.875rem' }}>
           {prediction}{icon}
         </div>
-        {game.completed && game.winner && (
+        {game.completed && game.winner ? (
           <div style={{ fontSize: compact ? '0.625rem' : '0.6875rem', color: '#718096', marginTop: '0.25rem' }}>
             Winner: {game.winner}
           </div>
-        )}
+        ) : null}
       </div>
     )
   }

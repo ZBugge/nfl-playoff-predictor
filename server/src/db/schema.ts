@@ -6,7 +6,9 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbPath = join(__dirname, '../../database.db');
+// Use DATABASE_PATH env var for Railway volume persistence, fallback to local path for dev
+const dbPath = process.env.DATABASE_PATH || join(__dirname, '../../database.db');
+console.log('Database path:', dbPath);
 
 let db: SqlJsDatabase;
 

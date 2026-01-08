@@ -505,14 +505,31 @@ curl https://your-app.railway.app/api/health
 - Includes: 512MB RAM, 1GB storage, reasonable CPU
 - Sufficient for: Small apps, personal projects, MVP testing
 
-### SQLite Persistence
+### SQLite Persistence with Railway Volumes
 **Critical:** Enable Railway **Volumes** to persist SQLite database across deploys.
 
+**Why it's needed:**
+Railway containers have ephemeral filesystems. Without a volume, `database.db` is lost on every deploy because the container is rebuilt from scratch.
+
 **Setup:**
-1. Railway Dashboard → Service → Storage
-2. Add Volume
-3. Mount path: `/app` (where database.db is created)
-4. Size: 1GB (minimum)
+1. Railway Dashboard → Your Service → Settings
+2. Scroll to **Volumes** section → Click **Add Volume**
+3. Mount path: `/data`
+4. Go to **Variables** tab
+5. Add environment variable: `DATABASE_PATH=/data/database.db`
+6. Redeploy
+
+**Code requirement:**
+The server must use the `DATABASE_PATH` env var (already configured in `server/src/db/schema.ts`):
+```typescript
+const dbPath = process.env.DATABASE_PATH || join(__dirname, '../../database.db');
+```
+
+**Verification:**
+1. Check Railway logs show: `Database path: /data/database.db`
+2. Create a test user
+3. Redeploy (push any change)
+4. Verify the test user still exists
 
 **Without volumes:** Database resets on every deploy!
 

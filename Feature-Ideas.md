@@ -1,1 +1,0 @@
-- In the invite link page, have a button at the top to skip right to the leaderboard

@@ -70,22 +70,60 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
     return { afc, nfc, superBowl }
   }
 
-  const renderGameCard = (game: BracketGame, compact: boolean = false) => {
+  // Reconstruct predicted matchup based on earlier predictions
+  const getPredictedMatchup = (game: BracketGame, allGames: BracketGame[]): { home: string; away: string } => {
+    // If actual matchup is set, use it
+    if (game.teamHome && game.teamAway && game.teamHome !== 'TBD' && game.teamAway !== 'TBD') {
+      return { home: game.teamHome, away: game.teamAway }
+    }
+
+    // For Super Bowl, use Conference Championship predictions
+    if (game.round === 'super_bowl') {
+      const confGames = allGames.filter(g => g.round === 'conference')
+      const afcConf = confGames.find(g => g.gameNumber === 1)
+      const nfcConf = confGames.find(g => g.gameNumber === 2)
+      const afcChamp = afcConf?.prediction?.predictedWinner || 'TBD'
+      const nfcChamp = nfcConf?.prediction?.predictedWinner || 'TBD'
+      return { home: afcChamp, away: nfcChamp }
+    }
+
+    // For Conference Championship, use Divisional predictions
+    if (game.round === 'conference') {
+      const divGames = allGames.filter(g => g.round === 'divisional')
+      if (game.gameNumber === 1) {
+        // AFC Conference
+        const afcDiv = divGames.filter(g => g.gameNumber <= 2)
+        const team1 = afcDiv[0]?.prediction?.predictedWinner || 'TBD'
+        const team2 = afcDiv[1]?.prediction?.predictedWinner || 'TBD'
+        return { home: team1, away: team2 }
+      } else {
+        // NFC Conference
+        const nfcDiv = divGames.filter(g => g.gameNumber >= 3)
+        const team1 = nfcDiv[0]?.prediction?.predictedWinner || 'TBD'
+        const team2 = nfcDiv[1]?.prediction?.predictedWinner || 'TBD'
+        return { home: team1, away: team2 }
+      }
+    }
+
+    // For Divisional, this is more complex (re-seeding) - fall back to stored prediction
+    if (game.prediction) {
+      return {
+        home: game.prediction.predictedWinner,
+        away: game.prediction.predictedOpponent || 'TBD'
+      }
+    }
+
+    return { home: 'TBD', away: 'TBD' }
+  }
+
+  const renderGameCard = (game: BracketGame, allGames: BracketGame[], compact = false) => {
     const style = getPickStyle(game)
     const icon = getPickIcon(game)
     const predictionWinner = game.prediction?.predictedWinner || 'No pick'
 
-    // Determine teams to display - use prediction data if actual teams are TBD
-    let teamsDisplay: string
-    if (game.teamHome && game.teamAway && game.teamHome !== 'TBD' && game.teamAway !== 'TBD') {
-      teamsDisplay = `${game.teamHome} vs ${game.teamAway}`
-    } else if (game.prediction) {
-      const team1 = game.prediction.predictedWinner
-      const team2 = game.prediction.predictedOpponent || 'TBD'
-      teamsDisplay = `${team1} vs ${team2}`
-    } else {
-      teamsDisplay = 'TBD vs TBD'
-    }
+    // Determine teams to display - reconstruct from earlier predictions if needed
+    const matchup = getPredictedMatchup(game, allGames)
+    const teamsDisplay = `${matchup.home} vs ${matchup.away}`
 
     return (
       <div
@@ -210,19 +248,19 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
               {/* Wild Card */}
               <div>
                 {renderRoundLabel('Wild Card')}
-                {afc.wildCard.map(g => renderGameCard(g))}
+                {afc.wildCard.map(g => renderGameCard(g, bracketData.games))}
               </div>
 
               {/* Divisional */}
               <div>
                 {renderRoundLabel('Divisional')}
-                {afc.divisional.map(g => renderGameCard(g))}
+                {afc.divisional.map(g => renderGameCard(g, bracketData.games))}
               </div>
 
               {/* Conference */}
               <div>
                 {renderRoundLabel('Conference')}
-                {afc.conference.map(g => renderGameCard(g))}
+                {afc.conference.map(g => renderGameCard(g, bracketData.games))}
               </div>
             </div>
           </div>
@@ -230,7 +268,7 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           {/* Super Bowl Center */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
             {renderRoundLabel('Super Bowl')}
-            {superBowl && renderGameCard(superBowl)}
+            {superBowl && renderGameCard(superBowl, bracketData.games)}
           </div>
 
           {/* NFC Side */}
@@ -241,19 +279,19 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
               {/* Wild Card */}
               <div>
                 {renderRoundLabel('Wild Card')}
-                {nfc.wildCard.map(g => renderGameCard(g))}
+                {nfc.wildCard.map(g => renderGameCard(g, bracketData.games))}
               </div>
 
               {/* Divisional */}
               <div>
                 {renderRoundLabel('Divisional')}
-                {nfc.divisional.map(g => renderGameCard(g))}
+                {nfc.divisional.map(g => renderGameCard(g, bracketData.games))}
               </div>
 
               {/* Conference */}
               <div>
                 {renderRoundLabel('Conference')}
-                {nfc.conference.map(g => renderGameCard(g))}
+                {nfc.conference.map(g => renderGameCard(g, bracketData.games))}
               </div>
             </div>
           </div>
@@ -264,18 +302,18 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           {/* Super Bowl */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ textAlign: 'center', color: '#667eea', marginBottom: '0.75rem', fontSize: '1.125rem' }}>Super Bowl</h3>
-            {superBowl && renderGameCard(superBowl, true)}
+            {superBowl && renderGameCard(superBowl, bracketData.games, true)}
           </div>
 
           {/* Conference */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <h4 style={{ textAlign: 'center', color: '#667eea', marginBottom: '0.5rem', fontSize: '0.875rem' }}>AFC Conference</h4>
-              {afc.conference.map(g => renderGameCard(g, true))}
+              {afc.conference.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
             <div>
               <h4 style={{ textAlign: 'center', color: '#e53e3e', marginBottom: '0.5rem', fontSize: '0.875rem' }}>NFC Conference</h4>
-              {nfc.conference.map(g => renderGameCard(g, true))}
+              {nfc.conference.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
           </div>
 
@@ -283,11 +321,11 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <h4 style={{ textAlign: 'center', color: '#667eea', marginBottom: '0.5rem', fontSize: '0.875rem' }}>AFC Divisional</h4>
-              {afc.divisional.map(g => renderGameCard(g, true))}
+              {afc.divisional.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
             <div>
               <h4 style={{ textAlign: 'center', color: '#e53e3e', marginBottom: '0.5rem', fontSize: '0.875rem' }}>NFC Divisional</h4>
-              {nfc.divisional.map(g => renderGameCard(g, true))}
+              {nfc.divisional.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
           </div>
 
@@ -295,11 +333,11 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <h4 style={{ textAlign: 'center', color: '#667eea', marginBottom: '0.5rem', fontSize: '0.875rem' }}>AFC Wild Card</h4>
-              {afc.wildCard.map(g => renderGameCard(g, true))}
+              {afc.wildCard.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
             <div>
               <h4 style={{ textAlign: 'center', color: '#e53e3e', marginBottom: '0.5rem', fontSize: '0.875rem' }}>NFC Wild Card</h4>
-              {nfc.wildCard.map(g => renderGameCard(g, true))}
+              {nfc.wildCard.map(g => renderGameCard(g, bracketData.games, true))}
             </div>
           </div>
         </div>

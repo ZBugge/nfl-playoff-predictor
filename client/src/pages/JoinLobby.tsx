@@ -196,6 +196,16 @@ function JoinLobby() {
       <div className="join-lobby-container">
         <h1>Join {lobby?.name}</h1>
 
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <Link
+            to={`/leaderboard/${lobbyId}`}
+            className="btn btn-secondary"
+            style={{ textDecoration: 'none' }}
+          >
+            View Leaderboard
+          </Link>
+        </div>
+
         <div className="card">
           <p style={{ fontSize: '1.125rem', marginBottom: '1.5rem', color: '#4a5568' }}>
             Make your predictions for all playoff games. Once submitted, you can view the leaderboard to see how you stack up!

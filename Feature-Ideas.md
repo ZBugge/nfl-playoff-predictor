@@ -1,2 +1,0 @@
-- If the lobby is using the "Both" scoring, display on the leaderboard that weighted score will be used as a tiebreaker
-- I want to figure out a way to nicely display each user's picks when looking at the lobby. Like clicking their name will then pop up what their bracket looks like

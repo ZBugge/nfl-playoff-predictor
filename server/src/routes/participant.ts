@@ -7,6 +7,7 @@ import {
 } from '../services/lobby.js';
 import { getGamesBySeason } from '../services/season.js';
 import { canAddParticipant } from '../services/limits.js';
+import { getParticipantBracket } from '../services/bracket.js';
 
 const router = express.Router();
 
@@ -72,6 +73,28 @@ router.get('/:lobbyId/participants', async (req, res) => {
   } catch (error) {
     console.error('Get participants error:', error);
     res.status(500).json({ error: 'Failed to get participants' });
+  }
+});
+
+router.get('/:participantId/bracket', async (req, res) => {
+  try {
+    const participantId = parseInt(req.params.participantId);
+    const seasonId = parseInt(req.query.seasonId as string);
+
+    if (isNaN(participantId) || isNaN(seasonId)) {
+      return res.status(400).json({ error: 'Invalid participantId or seasonId' });
+    }
+
+    const bracketData = await getParticipantBracket(participantId, seasonId);
+
+    if (!bracketData) {
+      return res.status(404).json({ error: 'Participant not found' });
+    }
+
+    res.json(bracketData);
+  } catch (error) {
+    console.error('Get participant bracket error:', error);
+    res.status(500).json({ error: 'Failed to get participant bracket' });
   }
 });
 

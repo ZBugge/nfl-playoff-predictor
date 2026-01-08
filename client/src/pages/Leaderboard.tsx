@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, type Lobby, type LeaderboardEntry, type Admin } from '../api/api'
+import BracketModal from '../components/BracketModal'
 
 function Leaderboard() {
   const { lobbyId } = useParams<{ lobbyId: string }>()
@@ -14,6 +15,7 @@ function Leaderboard() {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<number>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [viewingBracket, setViewingBracket] = useState<number | null>(null)
 
   useEffect(() => {
     loadData()
@@ -242,7 +244,22 @@ function Leaderboard() {
                           </span>
                         </td>
                         <td style={{ fontWeight: index === 0 ? 'bold' : 'normal', fontSize: index === 0 ? '1.125rem' : '1rem' }}>
-                          {entry.name}
+                          <button
+                            onClick={() => setViewingBracket(entry.participantId)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                              color: '#667eea',
+                              textDecoration: 'underline',
+                              font: 'inherit',
+                              fontWeight: 'inherit',
+                            }}
+                            title="View bracket"
+                          >
+                            {entry.name}
+                          </button>
                           {index === 0 && stats.progress === 100 && ' 👑'}
                         </td>
                         <td>
@@ -300,7 +317,23 @@ function Leaderboard() {
 
                     <div className="leaderboard-card-content">
                       <div className="leaderboard-card-name">
-                        {entry.name}
+                        <button
+                          onClick={() => setViewingBracket(entry.participantId)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: '#667eea',
+                            textDecoration: 'underline',
+                            font: 'inherit',
+                            fontWeight: 'inherit',
+                            textAlign: 'left',
+                          }}
+                          title="View bracket"
+                        >
+                          {entry.name}
+                        </button>
                         {index === 0 && stats.progress === 100 && ' 👑'}
                       </div>
 
@@ -380,6 +413,14 @@ function Leaderboard() {
           </div>
         </div>
       </div>
+
+      {viewingBracket !== null && lobby && (
+        <BracketModal
+          participantId={viewingBracket}
+          seasonId={lobby.season_id}
+          onClose={() => setViewingBracket(null)}
+        />
+      )}
     </div>
   )
 }

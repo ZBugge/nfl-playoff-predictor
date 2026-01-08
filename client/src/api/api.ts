@@ -57,6 +57,37 @@ interface LeaderboardEntry {
   totalPicks: number;
 }
 
+interface BracketGame {
+  id: number;
+  round: string;
+  gameNumber: number;
+  teamHome: string;
+  teamAway: string;
+  seedHome: number | null;
+  seedAway: number | null;
+  winner: string | null;
+  completed: boolean;
+  prediction: {
+    predictedWinner: string;
+    predictedOpponent: string | null;
+  } | null;
+  isCorrect: boolean | null;
+}
+
+interface BracketData {
+  participant: {
+    id: number;
+    name: string;
+  };
+  stats: {
+    simpleScore: number;
+    weightedScore: number;
+    correctPicks: number;
+    totalPicks: number;
+  };
+  games: BracketGame[];
+}
+
 export const api = {
   auth: {
     register: async (username: string, password: string): Promise<Admin> => {
@@ -356,6 +387,12 @@ export const api = {
       if (!res.ok) throw new Error('Failed to get participants');
       return res.json();
     },
+
+    getBracket: async (participantId: number, seasonId: number): Promise<BracketData> => {
+      const res = await fetch(`${API_URL}/participant/${participantId}/bracket?seasonId=${seasonId}`);
+      if (!res.ok) throw new Error('Failed to get bracket');
+      return res.json();
+    },
   },
 
   leaderboard: {
@@ -423,4 +460,4 @@ interface SystemStats {
   }>;
 }
 
-export type { Admin, Season, Lobby, Game, Participant, LeaderboardEntry, SystemStats };
+export type { Admin, Season, Lobby, Game, Participant, LeaderboardEntry, SystemStats, BracketGame, BracketData };

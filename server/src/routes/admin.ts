@@ -1,9 +1,25 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { getAdminById } from '../auth/auth.js';
 import { updateGameWinner } from '../services/season.js';
 import { updateSeasonScoresFromESPN, searchPlayoffGames } from '../services/espn.js';
+import { getSystemStats } from '../services/stats.js';
 
 const router = express.Router();
+
+// Middleware to check if user is super admin
+async function requireSuperAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (!req.session.adminId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const admin = await getAdminById(req.session.adminId);
+  if (!admin?.is_super_admin) {
+    return res.status(403).json({ error: 'Super admin access required' });
+  }
+
+  next();
+}
 
 router.post('/game/:gameId/winner', requireAuth, async (req, res) => {
   try {
@@ -45,6 +61,18 @@ router.get('/espn/playoff-games', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Search playoff games error:', error);
     res.status(500).json({ error: 'Failed to search playoff games' });
+  }
+});
+
+// Get system stats (super admin only)
+router.get('/stats', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const seasonId = req.query.seasonId ? Number(req.query.seasonId) : undefined;
+    const stats = await getSystemStats(seasonId);
+    res.json(stats);
+  } catch (error) {
+    console.error('Get system stats error:', error);
+    res.status(500).json({ error: 'Failed to get system stats' });
   }
 });
 

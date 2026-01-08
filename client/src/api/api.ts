@@ -392,7 +392,35 @@ export const api = {
       if (!res.ok) throw new Error('Failed to search playoff games');
       return res.json();
     },
+
+    getStats: async (seasonId?: number): Promise<SystemStats> => {
+      const url = seasonId
+        ? `${API_URL}/admin/stats?seasonId=${seasonId}`
+        : `${API_URL}/admin/stats`;
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to get system stats');
+      return res.json();
+    },
   },
 };
 
-export type { Admin, Season, Lobby, Game, Participant, LeaderboardEntry };
+interface SystemStats {
+  totals: {
+    admins: number;
+    lobbies: number;
+    participants: number;
+  };
+  topLobbies: Array<{
+    id: string;
+    name: string;
+    participantCount: number;
+  }>;
+  topAdmins: Array<{
+    id: number;
+    username: string;
+    lobbyCount: number;
+    totalParticipants: number;
+  }>;
+}
+
+export type { Admin, Season, Lobby, Game, Participant, LeaderboardEntry, SystemStats };

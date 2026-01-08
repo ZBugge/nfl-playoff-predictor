@@ -1,3 +1,3 @@
-- The My Lobbies page should display how many participants are in each lobby
 - As a super admin i want to have a dashboard where i can see how many admin accounts have been made/ how many lobbies have been created/ how many users have made predictions etc
+- If the lobby is using the "Both" scoring, display on the leaderboard that weighted score will be used as a tiebreaker
 - I want to figure out a way to nicely display each user's picks when looking at the lobby. Like clicking their name will then pop up what their bracket looks like

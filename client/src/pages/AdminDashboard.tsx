@@ -85,9 +85,14 @@ function AdminDashboard() {
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0 }}>Seasons</h2>
-            <Link to="/admin/create-season" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-              Create New Season
-            </Link>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link to="/admin/stats" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+                Stats Dashboard
+              </Link>
+              <Link to="/admin/create-season" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                Create New Season
+              </Link>
+            </div>
           </div>
 
           {seasons.length === 0 ? (

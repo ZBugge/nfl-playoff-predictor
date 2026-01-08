@@ -72,8 +72,8 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
 
   // Reconstruct predicted matchup based on earlier predictions
   const getPredictedMatchup = (game: BracketGame, allGames: BracketGame[]): { home: string; away: string } => {
-    // If actual matchup is set, use it
-    if (game.teamHome && game.teamAway && game.teamHome !== 'TBD' && game.teamAway !== 'TBD') {
+    // Wild Card games have fixed matchups from seeding
+    if (game.round === 'wild_card') {
       return { home: game.teamHome, away: game.teamAway }
     }
 
@@ -92,20 +92,20 @@ function BracketModal({ participantId, seasonId, onClose }: BracketModalProps) {
       const divGames = allGames.filter(g => g.round === 'divisional')
       if (game.gameNumber === 1) {
         // AFC Conference
-        const afcDiv = divGames.filter(g => g.gameNumber <= 2)
+        const afcDiv = divGames.filter(g => g.gameNumber <= 2).sort((a, b) => a.gameNumber - b.gameNumber)
         const team1 = afcDiv[0]?.prediction?.predictedWinner || 'TBD'
         const team2 = afcDiv[1]?.prediction?.predictedWinner || 'TBD'
         return { home: team1, away: team2 }
       } else {
         // NFC Conference
-        const nfcDiv = divGames.filter(g => g.gameNumber >= 3)
+        const nfcDiv = divGames.filter(g => g.gameNumber >= 3).sort((a, b) => a.gameNumber - b.gameNumber)
         const team1 = nfcDiv[0]?.prediction?.predictedWinner || 'TBD'
         const team2 = nfcDiv[1]?.prediction?.predictedWinner || 'TBD'
         return { home: team1, away: team2 }
       }
     }
 
-    // For Divisional, this is more complex (re-seeding) - fall back to stored prediction
+    // For Divisional, use stored prediction (re-seeding is complex)
     if (game.prediction) {
       return {
         home: game.prediction.predictedWinner,

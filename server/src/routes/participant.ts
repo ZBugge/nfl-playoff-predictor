@@ -13,6 +13,10 @@ const router = express.Router();
 
 router.post('/submit', async (req, res) => {
   try {
+    // TEMP close the lobby
+    
+    return res.status(400).json({ error: 'Submissions are closed' });
+
     const { lobbyId, name, predictions } = req.body;
 
     if (!lobbyId || !name || !predictions || !Array.isArray(predictions)) {
